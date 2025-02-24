@@ -66,5 +66,3 @@ El archivo `config.json` permite definir la ubicación del fichero de datos, el 
     "ALUMNOS_EXCLUIDOS": ["apellidos"]
 }
 ```
-  ```
-
