@@ -59,14 +59,14 @@ def buscarv(valor_buscar, dataframe, columna_busqueda, columna_retorno):
 def calcular_cuota(cliente):
     nombre_completo = cliente.nombre + ' ' + cliente.apellido
     
-    if (cliente.inscripcion_dic) == 'SÍ':
+    if cliente.inscripcion_dic:
         cuota = buscarv(cliente.curso.lower().strip(), cuotas_clientes, 'CURSO', 'dto dic del 1 al 15')
         cuota_dic = buscarv(cliente.curso.lower().strip(), cuotas_clientes, 'CURSO', 'dto dic / pago dsp del día 15')   
     else:
         cuota = buscarv(cliente.curso.lower().strip(), cuotas_clientes, 'CURSO', 'lista del 1 al 15')
         cuota_dic = buscarv(cliente.curso.lower().strip(), cuotas_clientes, 'CURSO', 'NORMAL')
     
-    if (cliente.dto_familiar) == 'SÍ':
+    if cliente.dto_familiar:
         cuota -= dto_familiar
         cuota_dic -= dto_familiar
 

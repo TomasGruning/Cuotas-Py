@@ -70,7 +70,7 @@ clientes_raw = [
     if not pd.isnull(cliente.nombre)
     and not pd.isnull(cliente.apellido) 
     and not pd.isnull(cliente.curso) 
-    and str(cliente.activo).upper() == 'SÍ' 
+    and cliente.activo
     and not cliente.apellido in alumnos_excluidos
 ]
 
@@ -86,12 +86,6 @@ for cliente in clientes_raw:
 
 # Correcciones manuales de la base
 for cliente in clientes:
-    cliente.dto_familiar = str(cliente.dto_familiar).upper()
-    if cliente.dto_familiar == 'NAN':
-        cliente.dto_familiar = 'NO'
-    cliente.inscripcion_dic = str(cliente.inscripcion_dic).upper()
-    if cliente.inscripcion_dic == 'NAN':
-        cliente.inscripcion_dic = 'NO'
     if cliente.telefono_mm == '':
         cliente.telefono_mm = None
     if cliente.telefono_pp == '':
