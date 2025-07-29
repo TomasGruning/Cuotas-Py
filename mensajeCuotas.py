@@ -37,16 +37,17 @@ class Cliente:
             f"{V}Curso{B}: {self.curso}, "
             f"{V}Teléfono Madre{B}: {'\x1B[41m' if self.telefono_mm == None else ''}{self.telefono_mm}{B}, "
             f"{V}Teléfono Padre{B}: {'\x1B[41m' if self.telefono_pp == None else ''}{self.telefono_pp}{B}, "
-            f"{V}Activo?{B}: {self.activo}, "
-            f"{V}dic?{B}: {self.inscripcion_dic}, "
-            f"{V}dto Familiar?{B}: {self.dto_familiar}{B}"
+            f"{V}Activo?{B}: {'SI' if self.activo == 1 else 'NO'}, "
+            f"{V}dic?{B}: {'SI' if self.inscripcion_dic == 1 else 'NO'}, "
+            f"{V}dto Familiar?{B}: {'SI' if self.dto_familiar == 1 else 'NO'}{B}"
         )
 
 # Carga configuraciones
 with open("config.json") as f:
     config = json.load(f)
 
-telefono_instituto = config["TEL_INSTITUTO"]
+telefono_instituto = str(config["TEL_INSTITUTO"])
+telefono_personal = str(config["TEL_PERSONAL"])
 alumnos_excluidos = config["ALUMNOS_EXCLUIDOS"]
 
 # Crear instancias de la clase Cliente para cada fila en los datos combinados
@@ -112,6 +113,8 @@ test_group.add_argument('-t', '--test', type=positive_integer, nargs='?', metava
                              help='imprime las cuotas de INT alumnos aleatorios')
 test_group.add_argument('-st', '--single-test', type=str, nargs=2, metavar='STR', 
                              help='imprime el mensaje de un alumno en especifico')
+test_group.add_argument('-mt', '--mesaje-test', action='store_true',
+                             help='manda un mensaje de prueba con el primer alumno de la lista')
 
 # Grupo de Opciones de Coordenadas
 coord_group = parser.add_argument_group('Opciones de Coordenadas')
@@ -145,9 +148,8 @@ if args.print:
 if args.print_coordinates:
     lb.conseguir_mouse()
 
-mx, my = 971, 986
+mx, my = 923, 978
 if args.coordinates:
-    print('ahh')
     mx, my = args.coordinates[0], args.coordinates[1]
 
 if args.test:
@@ -171,9 +173,15 @@ if args.single_test:
             break
     if not encontrado:
         print('\nNo se encontro al alumno')
+if args.mesaje_test:
+    cuota, cuota_dic = lb.calcular_cuota(clientes[0])
+    mensaje = lb.plantilla_mensaje_cuota(clientes[0].nombre, clientes[0].apellido, clientes[0].curso, cuota, cuota_dic)
+
+    lb.mandar_mensaje(telefono_personal, mensaje, mx, my)
 
 # M A I N
-if not args.test and not args.single_test and not args.print and not args.print_coordinates:
+if not args.test and not args.single_test and not args.mesaje_test and not args.print and not args.print_coordinates:
+
     for cliente in clientes:        
         cuota, cuota_dic = lb.calcular_cuota(cliente)
         mensaje = lb.plantilla_mensaje_cuota(cliente.nombre, cliente.apellido, cliente.curso, cuota, cuota_dic)
@@ -196,4 +204,5 @@ if not args.test and not args.single_test and not args.print and not args.print_
 
         
         print('')
+
 print('\n')

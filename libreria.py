@@ -37,7 +37,7 @@ def plantilla_mensaje_cuota(nombre, apellido, curso, cuota_normal, cuota_despues
                f"🔸 *NOMBRE*: {nombre} {apellido}{sl}"
                f"🔸 *CURSO*: {curso}{sl}"
                f"➡️ *CUOTA*: (descuentos por inscripción diciembre y familia ya aplicados){sl}{sl}"
-               f" *$ {int(cuota_normal)}*{sl} (*con bonificación* por pago del 1 al 15 de cada mes){sl}{sl}"
+               f" *$ {int(cuota_normal)}*{sl} (*con bonificación* por pago del 1 al 15 de cada mes; *marzo excepcionalmente hasta 21/03*){sl}{sl}"
                f" *$ {int(cuota_despues_15)}*{sl} (después del 15 de cada mes){sl}{sl}{sl}"
                "*_Carnaby_*")
     
@@ -83,14 +83,12 @@ def conseguir_mouse():
     sleep(1.5)
     print(pg.position())
 
-def mandar_mensaje(telefono, mensaje, x=953, y=964):
+def mandar_mensaje(telefono, mensaje, x=1203, y=966):
     web.open("https://web.whatsapp.com/send?phone=+54" + telefono + "&text=" + mensaje)
     sleep(10)
     pg.click(x,y)           # Hacer click en la caja de texto
     sleep(2.5)            
     pg.press('enter')       # Enviar mensaje 
-    sleep(1.3)           
+    sleep(2.5)           
     pg.hotkey('ctrl', 'w')  # Cerrar la pestaña
-    sleep(1)
-    pg.press('enter')
-    sleep(2)
+    sleep(3)

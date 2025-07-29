@@ -33,6 +33,7 @@ Opciones de Pruebas:
                         imprime las cuotas de INT alumnos aleatorios
   -st STR STR, --single-test STR STR
                         imprime el mensaje de un alumno en especifico
+  -mt, --mesaje-test    manda un mensaje de prueba con el primer alumno de la lista
 
 Opciones de Coordenadas:
   -c INT INT, --coordinates INT INT
@@ -63,6 +64,7 @@ El archivo `config.json` permite definir la ubicación del fichero de datos, el 
         "lista_precios": "Nombre de la hoja dentro del archivo Excel"
     },
     "TEL_INSTITUTO": 3410000000,
+    "TEL_PERSONAL": 3410000000,
     "ALUMNOS_EXCLUIDOS": ["apellidos"]
 }
 ```
