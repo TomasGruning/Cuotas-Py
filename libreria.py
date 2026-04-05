@@ -1,23 +1,21 @@
 import webbrowser as web
-import pyautogui as pg
 import pandas as pd
 from time import sleep
 from datetime import date
 from calendar import month_name
-import json
 import locale
+import json
 import re
 
 locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
 
 # Carga configuraciones
-with open("config.json") as f:
+with open("config.json", encoding="utf-8") as f:
     config = json.load(f)
 
 fichero = config["FICHERO"]["ubicacion"]
 lista_precios = config["FICHERO"]["lista_precios"]
 
-datos_clientes = pd.read_excel(fichero, sheet_name='listado maestro de alumnos', skiprows=3, usecols=lambda x: "Unnamed" not in x)
 cuotas_clientes = pd.read_excel(fichero, sheet_name=lista_precios, skiprows=6, usecols=lambda x: "Unnamed" not in x)
 dto_familiar = pd.read_excel(fichero, sheet_name=lista_precios).iloc[2, 2]
 
@@ -31,16 +29,18 @@ def mes_proximo():
 
     return month_name[mes_siguiente].upper()
 
-def plantilla_mensaje_cuota(nombre, apellido, curso, cuota_normal, cuota_despues_15, sl="%0A"):
-    mensaje = (f"Estimadas familias: {sl}{sl}"
-               f"A continuación les detallamos el valor de la cuota a partir del mes de *{mes_proximo()}*{sl}{sl}"
-               f"🔸 *NOMBRE*: {nombre} {apellido}{sl}"
-               f"🔸 *CURSO*: {curso}{sl}"
-               f"➡️ *CUOTA*: (descuentos por inscripción diciembre y familia ya aplicados){sl}{sl}"
-               f" *$ {int(cuota_normal)}*{sl} (*con bonificación* por pago del 1 al 15 de cada mes; *marzo excepcionalmente hasta 21/03*){sl}{sl}"
-               f" *$ {int(cuota_despues_15)}*{sl} (después del 15 de cada mes){sl}{sl}{sl}"
+def plantilla_mensaje_cuota(nombre, apellido, curso, cuota_normal, cuota_despues_15):
+    mensaje = (f"Estimadas familias: \n\n"
+               f"A continuación les detallamos el valor de la cuota a partir del mes de *marzo*\n\n"
+               f"🔸 *NOMBRE*: {nombre} {apellido}\n"
+               f"🔸 *CURSO*: {curso}\n"
+               f"➡️ *CUOTA*: (descuentos por inscripción diciembre y familia ya aplicados)\n\n"
+               f" *$ {int(cuota_normal)}*\n (*con bonificación* por pago del 1 al 15 de cada mes; *marzo excepcionalmente hasta 21/03*)\n\n"
+               f" *$ {int(cuota_despues_15)}*\n (después del 15 de cada mes)\n\n"
+               "Las cuotas pueden ser abonadas en efectivo o por transferencia bancaria. Si se elige esta última modalidad, solicitar CBU o ALIAS en administración. ‼️NO OLVIDAR enviar comprobante de la transferencia al celular del instituto 📱(153575345)\n\n"
+               "Ante cualquier duda o inquietud, les pedimos que lo comuniquen a administración.\n\n\n"
                "*_Carnaby_*")
-    
+   
     return mensaje
 
 def buscarv(valor_buscar, dataframe, columna_busqueda, columna_retorno):
@@ -71,24 +71,3 @@ def calcular_cuota(cliente):
         cuota_dic -= dto_familiar
 
     return cuota, cuota_dic
-
-def conseguir_mouse():
-    print('\nColoque el puntero en la barra de mensajes', flush=True, end='')
-    sleep(.5)
-    print('.', end='', flush=True)
-    sleep(1)
-    print('.', end='', flush=True)
-    sleep(1)
-    print('.')
-    sleep(1.5)
-    print(pg.position())
-
-def mandar_mensaje(telefono, mensaje, x=1203, y=966):
-    web.open("https://web.whatsapp.com/send?phone=+54" + telefono + "&text=" + mensaje)
-    sleep(10)
-    pg.click(x,y)           # Hacer click en la caja de texto
-    sleep(2.5)            
-    pg.press('enter')       # Enviar mensaje 
-    sleep(2.5)           
-    pg.hotkey('ctrl', 'w')  # Cerrar la pestaña
-    sleep(3)

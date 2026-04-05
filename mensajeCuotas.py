@@ -1,8 +1,20 @@
 import libreria as lb
+from time import sleep
 import pandas as pd
 import argparse
+import pyperclip
 import random
 import json
+import os
+
+from selenium import webdriver
+from selenium.webdriver import ActionChains
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 B = '\033[0;m'
 R = '\x1b[1;31m'
@@ -43,7 +55,7 @@ class Cliente:
         )
 
 # Carga configuraciones
-with open("config.json") as f:
+with open("config.json", encoding="utf-8") as f:
     config = json.load(f)
 
 telefono_instituto = str(config["TEL_INSTITUTO"])
@@ -51,8 +63,10 @@ telefono_personal = str(config["TEL_PERSONAL"])
 alumnos_excluidos = config["ALUMNOS_EXCLUIDOS"]
 
 # Crear instancias de la clase Cliente para cada fila en los datos combinados
+datos_clientes = pd.read_excel(lb.fichero, sheet_name='listado maestro de alumnos', skiprows=3, usecols=lambda x: "Unnamed" not in x)
+
 clientes_raw = []
-for index, row in lb.datos_clientes.iterrows():
+for index, row in datos_clientes.iterrows():
     cliente = Cliente(
         row['NOMBRE'], 
         row['APELLIDO'], 
@@ -91,6 +105,8 @@ for cliente in clientes:
         cliente.telefono_mm = None
     if cliente.telefono_pp == '':
         cliente.telefono_pp = None
+    cliente.apellido.strip()
+    cliente.nombre.strip()
 
 # F L A G S
 parser = argparse.ArgumentParser(
@@ -103,34 +119,24 @@ parser = argparse.ArgumentParser(
 # Grupo de Opciones Generales
 general_group = parser.add_argument_group('Opciones Generales')
 general_group.add_argument('-r', '--range', type=str, nargs=2, metavar='STR', 
-                           help='ejecuta apartir del alumno ingresado')
+                           help='ejecuta apartir del siguiente al alumno ingresado')
 general_group.add_argument('-p', '--print', action='store_true', 
                            help='imprime la lista de alumnos')
 
 # Grupo de Opciones de Pruebas
 test_group = parser.add_argument_group('Opciones de Pruebas')
+test_group.add_argument('-c', '--contact', action='store_true', 
+                             help='comprueba los contactos agendados')
 test_group.add_argument('-t', '--test', type=positive_integer, nargs='?', metavar='INT', const=3, 
                              help='imprime las cuotas de INT alumnos aleatorios')
 test_group.add_argument('-st', '--single-test', type=str, nargs=2, metavar='STR', 
                              help='imprime el mensaje de un alumno en especifico')
-test_group.add_argument('-mt', '--mesaje-test', action='store_true',
-                             help='manda un mensaje de prueba con el primer alumno de la lista')
-
-# Grupo de Opciones de Coordenadas
-coord_group = parser.add_argument_group('Opciones de Coordenadas')
-coord_group.add_argument('-c', '--coordinates', type=int, nargs=2, metavar='INT', 
-                             help='toma como parametro las cordenadas del mouse')
-coord_group.add_argument('-pc', '--print-coordinates', action='store_true', 
-                             help='imprime las cordenadas del puntero')
 
 # Parsear los argumentos
 args = parser.parse_args()
 
 if args.test is not None and args.single_test is not None:
     parser.error("Las opciones -t y -st no pueden ser usadas al mismo tiempo")
-if args.coordinates is not None and args.print_coordinates is not None:
-    print(args.coordinates, args.print_coordinates)
-    parser.error("Las opciones -c y -pc no pueden ser usadas al mismo tiempo") 
 
 if args.range:
     encontrado = False
@@ -145,12 +151,6 @@ if args.range:
 if args.print:
     for cliente in clientes:
         print(cliente, '\n')
-if args.print_coordinates:
-    lb.conseguir_mouse()
-
-mx, my = 923, 978
-if args.coordinates:
-    mx, my = args.coordinates[0], args.coordinates[1]
 
 if args.test:
     clientes_aleatorios = random.sample(clientes, args.test)
@@ -162,47 +162,101 @@ if args.test:
         print("-----------------------------")
         print("Cuota normal:     ", '$', int(cuota))
         print("Cuota despues 15: ", '$', int(cuota_dic))
+
 if args.single_test:
     for cliente in clientes:
         encontrado = False
         if cliente.nombre == args.single_test[1].upper() and cliente.apellido == args.single_test[0].upper():
             cuota, cuota_dic = lb.calcular_cuota(cliente)
             print('\n', cliente, '\n\n')
-            print(lb.plantilla_mensaje_cuota(cliente.nombre, cliente.apellido, cliente.curso, cuota, cuota_dic, '\n'))
+            print(lb.plantilla_mensaje_cuota(cliente.nombre, cliente.apellido, cliente.curso, cuota, cuota_dic))
             encontrado = True
             break
     if not encontrado:
         print('\nNo se encontro al alumno')
-if args.mesaje_test:
-    cuota, cuota_dic = lb.calcular_cuota(clientes[0])
-    mensaje = lb.plantilla_mensaje_cuota(clientes[0].nombre, clientes[0].apellido, clientes[0].curso, cuota, cuota_dic)
-
-    lb.mandar_mensaje(telefono_personal, mensaje, mx, my)
 
 # M A I N
-if not args.test and not args.single_test and not args.mesaje_test and not args.print and not args.print_coordinates:
+def mandar_mensaje(telefono, mensage, agendado=False):
+    # === BUSCAR CONTACTO ===
+    busqueda = driver.find_element(By.XPATH, '//div[@contenteditable="true"][@data-tab="3"]')
+    busqueda.send_keys(Keys.CONTROL, 'a', Keys.BACKSPACE)
+    busqueda.click()
+    busqueda.send_keys(str(telefono))
+    driver.implicitly_wait(2)
 
-    for cliente in clientes:        
+    resultados = driver.find_elements(By.XPATH, '//span[contains(text(),"No se encontr")]')
+    if resultados:
+        print(R, '\n(*) No tiene telefono registrado, enviando a Carnaby', B)
+
+        busqueda.send_keys(Keys.CONTROL, 'a', Keys.BACKSPACE)
+        busqueda.send_keys(telefono_instituto)
+        busqueda.send_keys(Keys.ENTER)
+
+        sleep(1)
+        barra_msg = driver.find_element(By.XPATH, '//div[@contenteditable="true"][@data-tab="10"]')
+        barra_msg.click()
+        barra_msg.send_keys(telefono, " sin agendar")
+        barra_msg.send_keys(Keys.ENTER)
+        sleep(3)
+
+    elif not args.contact:
+        busqueda.send_keys(Keys.ENTER)
+        
+        # === ENVIAR MENSAJE ===
+        driver.implicitly_wait(1)
+        barra_msg = driver.find_element(By.XPATH, '//div[@contenteditable="true"][@data-tab="10"]')
+        barra_msg.click()
+        
+        pyperclip.copy(mensaje)
+        act = ActionChains(driver)
+        act.key_down(Keys.CONTROL).send_keys("v").key_up(Keys.CONTROL).perform()
+
+        barra_msg.send_keys(Keys.ENTER)
+        sleep(3)
+    
+
+if not args.test and not args.single_test and not args.print:
+
+    session = True if os.path.isdir("./user_data") else False 
+
+    # === OPCIONES DE CHROME ===
+    options = Options()
+    ruta_perfil = os.path.abspath("user_data")
+    options.add_argument(f"--user-data-dir={ruta_perfil}") # Guarda la sesión del navegador
+
+    # === INICIAR DRIVER ===
+    service = Service(executable_path="./chromedriver.exe")
+    driver = webdriver.Chrome(service=service, options=options)
+
+    # === ABRIR WHATSAPP WEB ===
+    driver.get("https://web.whatsapp.com")
+    
+    if session: sleep(1005)
+    else: sleep(120)
+
+    
+    for cliente in clientes:  
+        
         cuota, cuota_dic = lb.calcular_cuota(cliente)
         mensaje = lb.plantilla_mensaje_cuota(cliente.nombre, cliente.apellido, cliente.curso, cuota, cuota_dic)
         
         print("\nMama:", cliente.apellido + ' ' + cliente.nombre + ' |', cliente.telefono_mm, end='', flush=True)
         if cliente.telefono_mm: 
-            if len(str(cliente.telefono_mm)) != 10 or cliente.telefono_mm[0:3] != '341':
+            if len(str(cliente.telefono_mm)) != 10 or cliente.telefono_mm[:3] != '341':
                 print(A, " (*) El numero de telefono de la madre no parece ser valido", B, end='')
-            #lb.mandar_mensaje(cliente.telefono_mm, mensaje, mx, my)
+            mandar_mensaje(cliente.telefono_mm, mensaje)
 
         print("\nPapa:", cliente.apellido + ' ' + cliente.nombre + ' |', cliente.telefono_pp, end='', flush=True)
         if cliente.telefono_pp:
-            if len(str(cliente.telefono_pp)) != 10 or cliente.telefono_pp[0:3] != '341':
+            if len(str(cliente.telefono_pp)) != 10 or cliente.telefono_pp[:3] != '341':
                 print(A, " (*) El numero de telefono del padre no parece ser valido", B, end='')
-            #lb.mandar_mensaje(cliente.telefono_pp, mensaje, mx, my)
+            mandar_mensaje(cliente.telefono_pp, mensaje)
 
         if not cliente.telefono_mm and not cliente.telefono_pp:
             print(R, '\n(*) No tiene telefono registrado, enviando a Carnaby', B, end='')
-            #lb.mandar_mensaje(telefono_instituto, mensaje, mx, my)
-
+            mandar_mensaje(telefono_instituto, mensaje)
         
         print('')
+    driver.quit()
 
 print('\n')

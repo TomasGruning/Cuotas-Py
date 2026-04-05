@@ -1,6 +1,8 @@
 # M A I N
 *.json
 *.xlsx
+chromedriver*
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

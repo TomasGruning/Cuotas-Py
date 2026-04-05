@@ -25,7 +25,7 @@ options:
 
 Opciones Generales:
   -r STR STR, --range STR STR
-                        ejecuta apartir del alumno ingresado
+                        ejecuta apartir del siguiente al alumno ingresado
   -p, --print           imprime la lista de alumnos
 
 Opciones de Pruebas:
@@ -33,23 +33,6 @@ Opciones de Pruebas:
                         imprime las cuotas de INT alumnos aleatorios
   -st STR STR, --single-test STR STR
                         imprime el mensaje de un alumno en especifico
-  -mt, --mesaje-test    manda un mensaje de prueba con el primer alumno de la lista
-
-Opciones de Coordenadas:
-  -c INT INT, --coordinates INT INT
-                        toma como parametro las cordenadas del mouse
-  -pc, --print-coordinates
-                        imprime las cordenadas del puntero
-```
-
-## ⚙️ Dependencias
-
-* _pandas_: Manejo de planillas de cálculo.
-* _pyautogui_: Interacción con el puntero del sistema.
-
-### Instalación
-```bash
-pip install pandas pyautogui
 ```
 
 ## 🛠️ Formato del `config.json`
